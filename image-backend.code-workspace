@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../Desktop/newgithubpy/__pycache__"
+		},
+		{
+			"path": "../../../Desktop/newgithubpy/myenv"
+		},
+		{
+			"path": "../../../Desktop/newgithubpy/uploads"
+		},
+		{
+			"path": "../../../Desktop/newgithubpy/venv"
+		}
+	],
+	"settings": {}
+}
