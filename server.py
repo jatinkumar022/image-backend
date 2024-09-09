@@ -52,7 +52,7 @@ def upload_image():
     sharpness_enhancer = ImageEnhance.Sharpness(enhanced_image)
     sharpened_image = sharpness_enhancer.enhance(2.0)
     smooth_image = enhanced_image.filter(ImageFilter.SMOOTH_MORE)
- 
+
     enhanced_image_cv = np.array(enhanced_image)
     enhanced_image_cv = cv2.cvtColor(enhanced_image_cv, cv2.COLOR_RGB2BGR)
 
@@ -85,4 +85,5 @@ def download_image(image_type):
         return jsonify({"error": "Invalid image type"}), 400
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
