@@ -32,6 +32,12 @@ def remove_background():
     except Exception as e:
         return str(e), 500
 
+
+@app.route('/health')
+def health_check():
+    return "OK", 200
+
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -85,6 +91,6 @@ def download_image(image_type):
         return jsonify({"error": "Invalid image type"}), 400
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     print(f"Flask app is running on port {port}")  # Debug print
     app.run(host="0.0.0.0", port=port)
