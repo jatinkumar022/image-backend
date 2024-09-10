@@ -28,6 +28,7 @@ def allowed_file(filename):
 def health_check():
     return "OK", 200
 
+
 @app.route('/remove-background', methods=['POST'])
 @cross_origin(origins='*')
 def remove_background():
@@ -51,18 +52,21 @@ def remove_background():
         
         # Process the image to remove the background
         output = remove(image)
-        
+
         # Save the output to a file
-        output_path = os.path.join(UPLOAD_FOLDER, 'background_removed_image.png')
+        output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'background_removed_image.png')
         output.save(output_path, format='PNG')
         
         # Return the URL for the processed image
         return jsonify({
-            "processed_image_url": '/download/background_removed_image'
+            "processed_image_url": f'/download/background_removed_image'
         })
     except Exception as e:
         logging.error(f"Error during background removal: {e}")
         return jsonify({"error": "Error during background removal"}), 500
+
+
+
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
