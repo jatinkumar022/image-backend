@@ -6,22 +6,42 @@ import os
 import numpy as np
 import cv2
 from flask_cors import CORS
+import logging
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS to allow requests from your frontend domain
+CORS(app, resources={r"/*": {"origins": "https://image-frontend.onrender.com"}})
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 UPLOAD_FOLDER = 'uploads/'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/remove-background', methods=['POST'])
 def remove_background():
     if 'image' not in request.files:
+        logging.info("No file part")
         return "No file part", 400
     
     file = request.files['image']
+    
     if file.filename == '':
+        logging.info("No selected file")
         return "No selected file", 400
-
+    
+    if not allowed_file(file.filename):
+        logging.info("Invalid file type")
+        return "Invalid file type", 400
+    
     try:
         image = Image.open(file)
         output = remove(image)
@@ -30,13 +50,8 @@ def remove_background():
         img_byte_arr.seek(0)
         return send_file(img_byte_arr, mimetype='image/png', as_attachment=True, download_name='output.png')
     except Exception as e:
+        logging.error(f"Error: {e}")
         return str(e), 500
-
-
-@app.route('/health')
-def health_check():
-    return "OK", 200
-
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -44,6 +59,9 @@ def upload_image():
         return jsonify({"error": "No image uploaded"}), 400
 
     file = request.files['image']
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid file type"}), 400
+
     img = Image.open(file.stream)
     original_img_path = os.path.join(UPLOAD_FOLDER, 'original_image.jpg')
     img.save(original_img_path)
@@ -90,7 +108,6 @@ def download_image(image_type):
     else:
         return jsonify({"error": "Invalid image type"}), 400
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    print(f"Flask app is running on port {port}")  # Debug print
-    app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=True)
