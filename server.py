@@ -30,42 +30,34 @@ def health_check():
 
 
 @app.route('/remove-background', methods=['POST'])
-@cross_origin(origins='*')
 def remove_background():
+    logging.info("Received request for /remove-background")
+    
     if 'image' not in request.files:
-        logging.info("No file part")
+        logging.error("No image file in request")
         return jsonify({"error": "No file part"}), 400
 
     file = request.files['image']
-
+    
     if file.filename == '':
-        logging.info("No selected file")
+        logging.error("No selected file")
         return jsonify({"error": "No selected file"}), 400
 
     if not allowed_file(file.filename):
-        logging.info("Invalid file type")
+        logging.error("Invalid file type")
         return jsonify({"error": "Invalid file type"}), 400
 
     try:
-        # Open the image file
+        logging.info("Processing image")
         image = Image.open(file)
-        
-        # Process the image to remove the background
         output = remove(image)
-
-        # Save the output to a file
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'background_removed_image.png')
+        output_path = os.path.join(UPLOAD_FOLDER, 'background_removed_image.png')
         output.save(output_path, format='PNG')
-        
-        # Return the URL for the processed image
-        return jsonify({
-            "processed_image_url": f'/download/background_removed_image'
-        })
+        logging.info(f"Image saved to {output_path}")
+        return jsonify({"processed_image_url": '/download/background_removed_image.png'})
     except Exception as e:
         logging.error(f"Error during background removal: {e}")
         return jsonify({"error": "Error during background removal"}), 500
-
-
 
 
 @app.route('/upload', methods=['POST'])
