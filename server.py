@@ -1,17 +1,15 @@
 from flask import Flask, request, send_file, jsonify
+from flask_cors import CORS
 from rembg import remove
 from PIL import Image, ImageEnhance, ImageFilter
 import io
 import os
 import numpy as np
 import cv2
-from flask_cors import CORS
 import logging
 
 app = Flask(__name__)
-
-# Configure CORS to allow requests from your frontend domain
-CORS(app, resources={r"/*": {"origins": "https://image-frontend.onrender.com"}})
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins; change as needed
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +23,14 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+
+@app.route('/health')
+def health_check():
+    return "OK", 200
+
 
 @app.route('/remove-background', methods=['POST'])
 def remove_background():
@@ -109,5 +115,5 @@ def download_image(image_type):
         return jsonify({"error": "Invalid image type"}), 400
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
