@@ -84,6 +84,7 @@ def download_image(image_type):
     else:
         return jsonify({"error": "Invalid image type"}), 400
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Flask app is running on port {port}")  # Debug print
+    app.run(host="0.0.0.0", port=port)
