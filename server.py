@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from rembg import remove
 from PIL import Image, ImageEnhance, ImageFilter
 import io
@@ -24,40 +24,45 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-
-
 @app.route('/health')
 def health_check():
     return "OK", 200
 
-
 @app.route('/remove-background', methods=['POST'])
+@cross_origin(origins='*')
 def remove_background():
     if 'image' not in request.files:
         logging.info("No file part")
-        return "No file part", 400
-    
+        return jsonify({"error": "No file part"}), 400
+
     file = request.files['image']
-    
+
     if file.filename == '':
         logging.info("No selected file")
-        return "No selected file", 400
-    
+        return jsonify({"error": "No selected file"}), 400
+
     if not allowed_file(file.filename):
         logging.info("Invalid file type")
-        return "Invalid file type", 400
-    
+        return jsonify({"error": "Invalid file type"}), 400
+
     try:
+        # Open the image file
         image = Image.open(file)
+        
+        # Process the image to remove the background
         output = remove(image)
-        img_byte_arr = io.BytesIO()
-        output.save(img_byte_arr, format='PNG')
-        img_byte_arr.seek(0)
-        return send_file(img_byte_arr, mimetype='image/png', as_attachment=True, download_name='output.png')
+        
+        # Save the output to a file
+        output_path = os.path.join(UPLOAD_FOLDER, 'background_removed_image.png')
+        output.save(output_path, format='PNG')
+        
+        # Return the URL for the processed image
+        return jsonify({
+            "processed_image_url": '/download/background_removed_image'
+        })
     except Exception as e:
-        logging.error(f"Error: {e}")
-        return str(e), 500
+        logging.error(f"Error during background removal: {e}")
+        return jsonify({"error": "Error during background removal"}), 500
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -111,9 +116,11 @@ def download_image(image_type):
         return send_file(os.path.join(UPLOAD_FOLDER, 'original_image.jpg'), as_attachment=True)
     elif image_type == "processed_image":
         return send_file(os.path.join(UPLOAD_FOLDER, 'processed_image.jpg'), as_attachment=True)
+    elif image_type == "background_removed_image":
+        return send_file(os.path.join(UPLOAD_FOLDER, 'background_removed_image.png'), as_attachment=True)
     else:
         return jsonify({"error": "Invalid image type"}), 400
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port, debug=True)
